@@ -8,7 +8,7 @@ mod tests {
         core::engine_state::Error as EngineStateError,
         storage::global_state::in_memory::InMemoryGlobalState,
     };
-    use std::path::PathBuf;
+    use std::{convert::TryInto, path::PathBuf};
 
     use casper_engine_test_support::{
         DeployItemBuilder, ExecuteRequestBuilder, InMemoryWasmTestBuilder, WasmTestBuilder,
@@ -16,6 +16,8 @@ mod tests {
     };
     use casper_execution_engine::core::execution;
     use casper_types::{runtime_args, ApiError, ContractHash, RuntimeArgs};
+
+    use hex::FromHex;
 
     const VALUE: u32 = 1;
     const RUNTIME_ARG_NAME: &str = "number";
@@ -74,7 +76,11 @@ mod tests {
         builder.exec(init_request).expect_success().commit();
 
         let action_id = 123_u32;
-        let sig_data: [u8; 64] = [10u8; 64];
+
+        let input = "e8d77107262fc5ae787662dc418cf01f36394a4d4ec417230dcac66c4afb0744e4d7d120735c3be7517750f53f22ac60b9dee22b05ab9775cf7e15406e9cc708";
+        let bytes = Vec::from_hex(input).expect("Can not read from hex");
+        assert_eq!(bytes.len(), 64);
+        let sig_data: [u8; 64] = bytes.try_into().expect("Can not convert in array");
 
         let validate_pause_request = ExecuteRequestBuilder::contract_call_by_hash(
             *DEFAULT_ACCOUNT_ADDR,

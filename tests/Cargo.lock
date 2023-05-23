@@ -1328,6 +1328,7 @@ dependencies = [
  "casper-engine-test-support",
  "casper-execution-engine",
  "casper-types",
+ "hex",
 ]
 
 [[package]]
