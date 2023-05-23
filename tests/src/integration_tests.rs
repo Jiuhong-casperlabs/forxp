@@ -61,12 +61,6 @@ mod tests {
         assert_eq!(bytes.len(), 32);
         let group_key: [u8; 32] = bytes.try_into().expect("Can not convert in array");
 
-        dbg!(group_key);
-
-        //let group_key: [u8; 32] = [7u8; 32];
-
-        dbg!(group_key);
-
         let fee_public_key: [u8; 32] = [8u8; 32];
         let whitelist = vec![ContractHash::from([9u8; 32])];
 
@@ -88,7 +82,7 @@ mod tests {
 
         let input = "e8d7718c262fc5ae787662dc418cf01f36394a4d4ec417230dcac66c4afb0744e4d7d120735c3be7517750f53f22ac60b9dee22b05ab9775cf7e15406e9cc708";
 
-        //  let input = "e8d77107262fc5ae787662dc418cf01f36394a4d4ec417230dcac66c4afb0744e4d7d120735c3be7517750f53f22ac60b9dee22b05ab9775cf7e15406e9cc708"; // fails with one byte of diff e8d771 8c/07
+        let input = "e8d77107262fc5ae787662dc418cf01f36394a4d4ec417230dcac66c4afb0744e4d7d120735c3be7517750f53f22ac60b9dee22b05ab9775cf7e15406e9cc708"; // fails with one byte of diff e8d771 8c/07
 
         let bytes = Vec::from_hex(input).expect("Can not read from hex");
         assert_eq!(bytes.len(), 64);
