@@ -89,8 +89,23 @@ mod tests {
 
         builder
             .exec(validate_pause_request)
-            .expect_success()
-            .commit(); // this reverts
+            .commit()
+            .expect_failure();
+
+        let error_code: u16 = 30;
+
+        let actual_error = builder.get_error().expect("must have error");
+        let reason = "should revert on verify";
+        let actual = format!("{actual_error:?}");
+        let expected = format!(
+            "{:?}",
+            EngineStateError::Exec(execution::Error::Revert(ApiError::User(error_code)))
+        );
+
+        assert_eq!(
+            actual, expected,
+            "Error should match {error_code} with reason: {reason}"
+        )
     }
 
     #[test]
