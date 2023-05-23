@@ -25,7 +25,7 @@ mod tests {
     pub const CONTRACT_NAME: &str = "this_contract1";
 
     #[test]
-    fn should_call_init() {
+    fn should_call_init_and_validate_pause_and_error() {
         let mut builder = InMemoryWasmTestBuilder::default();
         builder
             .run_genesis(&PRODUCTION_RUN_GENESIS_REQUEST)
