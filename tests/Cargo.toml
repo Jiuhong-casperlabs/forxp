@@ -4,7 +4,9 @@ version = "0.1.0"
 edition = "2018"
 
 [dev-dependencies]
-casper-contract = { version = "3.0.0", default-features = false, features = ["test-support"] }
+casper-contract = { version = "3.0.0", default-features = false, features = [
+  "test-support",
+] }
 casper-engine-test-support = { version = "5.0.0", features = ["test-support"] }
 casper-execution-engine = "5.0.0"
 casper-types = "3.0.0"
@@ -14,4 +16,3 @@ name = "integration-tests"
 path = "src/integration_tests.rs"
 bench = false
 doctest = false
-
