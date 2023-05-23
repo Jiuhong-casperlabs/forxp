@@ -18,6 +18,7 @@ mod utils;
 // Importing Rust types.
 use alloc::{
     boxed::Box,
+    format,
     string::{String, ToString},
     vec,
     vec::Vec,
@@ -139,6 +140,8 @@ fn require_sig(action_id: U256, data: Vec<u8>, sig_data: &[u8], context: &[u8]) 
             .unwrap_or_revert_with(BridgeError::FailedToPrepareSignature),
     );
     let key = PublicKey::new(group_key);
+    runtime::print(&format!("hash {:?}", hash));
+    runtime::print(&format!("sig {:?}", sig));
     let res = key.verify(hash, &sig);
     if res.is_err() {
         runtime::revert(BridgeError::UnauthorizedAction);
@@ -192,13 +195,15 @@ pub extern "C" fn validate_pause() {
     )
     .unwrap_or_revert();
 
-    require_sig(
-        data.action_id,
-        data.to_bytes()
-            .unwrap_or_revert_with(BridgeError::FailedToSerializeActionStruct),
-        &sig_data,
-        b"SetPause",
-    );
+    runtime::print(&format!("action_id {}", data.action_id));
+
+    let data_as_bytes = data
+        .to_bytes()
+        .unwrap_or_revert_with(BridgeError::FailedToSerializeActionStruct);
+
+    runtime::print(&format!("data_as_bytes {:?}", data_as_bytes));
+
+    require_sig(data.action_id, data_as_bytes, &sig_data, b"SetPause");
 
     let paused_uref = utils::get_uref(
         KEY_PAUSED,

@@ -57,7 +57,15 @@ mod tests {
 
         let contract_hash = get_contract_hash(&builder);
 
-        let group_key: [u8; 32] = [7u8; 32];
+        let input = "8cf71022d8a4240c486d8653fbf31de4b7748ef3c1477b728d3eb1e7d307f1b2";
+        let bytes = Vec::from_hex(input).expect("Can not read from hex");
+        assert_eq!(bytes.len(), 32);
+        let group_key: [u8; 32] = bytes.try_into().expect("Can not convert in array");
+
+        // let group_key: [u8; 32] = [7u8; 32]; this test pass
+
+        dbg!(group_key);
+
         let fee_public_key: [u8; 32] = [8u8; 32];
         let whitelist = vec![ContractHash::from([9u8; 32])];
 
@@ -95,23 +103,28 @@ mod tests {
 
         builder
             .exec(validate_pause_request)
-            .commit()
-            .expect_failure();
+            .expect_success()
+            .commit();
 
-        let error_code: u16 = 30;
+        // builder
+        //     .exec(validate_pause_request)
+        //     .commit()
+        //     .expect_failure();
 
-        let actual_error = builder.get_error().expect("must have error");
-        let reason = "should revert on verify";
-        let actual = format!("{actual_error:?}");
-        let expected = format!(
-            "{:?}",
-            EngineStateError::Exec(execution::Error::Revert(ApiError::User(error_code)))
-        );
+        // let error_code: u16 = 30;
 
-        assert_eq!(
-            actual, expected,
-            "Error should match {error_code} with reason: {reason}"
-        )
+        // let actual_error = builder.get_error().expect("must have error");
+        // let reason = "should revert on verify";
+        // let actual = format!("{actual_error:?}");
+        // let expected = format!(
+        //     "{:?}",
+        //     EngineStateError::Exec(execution::Error::Revert(ApiError::User(error_code)))
+        // );
+
+        // assert_eq!(
+        //     actual, expected,
+        //     "Error should match {error_code} with reason: {reason}"
+        // )
     }
 
     #[test]
