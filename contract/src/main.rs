@@ -18,6 +18,7 @@ mod utils;
 // Importing Rust types.
 use alloc::{
     boxed::Box,
+    format,
     string::{String, ToString},
     vec,
     vec::Vec,
@@ -52,6 +53,8 @@ use structs::{
     FreezeNFT, PauseData, TxFee, UnpauseData, UpdateGroupKey, ValidateBlacklist,
     ValidateTransferData, ValidateUnfreezeData, ValidateWhitelist, WithdrawFeeData, WithdrawNFT,
 };
+
+use ed25519_compact::Error;
 
 pub const INITIALIZED: &str = "initialized";
 pub const THIS_CONTRACT: &str = "this_contract";
@@ -138,10 +141,51 @@ fn require_sig(action_id: U256, data: Vec<u8>, sig_data: &[u8], context: &[u8]) 
             .map_err(|_| BridgeError::FailedToPrepareSignature)
             .unwrap_or_revert_with(BridgeError::FailedToPrepareSignature),
     );
-    let key = PublicKey::new(group_key);
-    let res = key.verify(hash, &sig);
-    if res.is_err() {
-        runtime::revert(BridgeError::UnauthorizedAction);
+    let public_key = PublicKey::new(group_key);
+    runtime::print(&format!("public_key {:?}", public_key));
+    runtime::print(&format!("hash {:?}", hash));
+    runtime::print(&format!("sig {:?}", sig));
+
+    match PublicKey::from_slice(&group_key) {
+        Ok(public_key) => {
+            runtime::print(&format!("public_key valid: {:?}", public_key));
+        }
+        Err(err) => {
+            runtime::print(&format!("err : {:?}", err,));
+        }
+    }
+
+    let st = public_key.verify_incremental(&sig);
+
+    match st {
+        Ok(mut state) => {
+            runtime::print("verify_incremental succeeded");
+            state.absorb(hash);
+            let verif = state.verify(); // This line crashes on https://github.com/jedisct1/rust-ed25519-compact/blame/master/src/ed25519.rs#L241
+            match verif {
+                Ok(()) => {
+                    runtime::print("verify succeeded");
+                }
+                Err(err) => {
+                    match err {
+                        Error::InvalidSignature => {
+                            runtime::print("err : InvalidSignature");
+                        }
+                        Error::InvalidPublicKey => {
+                            runtime::print("err : InvalidPublicKey");
+                        }
+                        _ => {
+                            runtime::print(&format!("Error : {:?}", err));
+                        }
+                    }
+                    runtime::revert(BridgeError::UnauthorizedAction);
+                }
+            }
+        }
+        Err(err) => {
+            runtime::print(&format!("Error : {:?}", err));
+            runtime::revert(BridgeError::ContractStatePaused);
+        }
     }
 }
 
@@ -162,7 +206,8 @@ pub extern "C" fn init() {
     runtime::put_key(KEY_PAUSED, storage::new_uref(false).into());
 
     runtime::put_key(KEY_PURSE, contract_api::system::create_purse().into());
-
+    runtime::print(&format!("group_key {:?}", group_key));
+    runtime::print(&format!("fee_public_key {:?}", fee_public_key));
     runtime::put_key(KEY_FEE_PUBLIC_KEY, storage::new_uref(fee_public_key).into());
     runtime::put_key(KEY_GROUP_KEY, storage::new_uref(group_key).into());
     let whitelist = storage::new_dictionary(KEY_WHITELIST_DICT)
@@ -192,13 +237,17 @@ pub extern "C" fn validate_pause() {
     )
     .unwrap_or_revert();
 
-    require_sig(
-        data.action_id,
-        data.to_bytes()
-            .unwrap_or_revert_with(BridgeError::FailedToSerializeActionStruct),
-        &sig_data,
-        b"SetPause",
-    );
+    runtime::print(&format!("action_id {}", data.action_id));
+
+    let data_as_bytes = data
+        .to_bytes()
+        .unwrap_or_revert_with(BridgeError::FailedToSerializeActionStruct);
+
+    runtime::print(&format!("data_as_bytes {:?}", data_as_bytes));
+
+    runtime::print(&format!("sig_data {:?}", sig_data));
+
+    require_sig(data.action_id, data_as_bytes, &sig_data, b"SetPause");
 
     let paused_uref = utils::get_uref(
         KEY_PAUSED,

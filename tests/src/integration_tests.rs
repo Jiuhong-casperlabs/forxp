@@ -56,8 +56,11 @@ mod tests {
         builder.exec(execute_request).commit().expect_success();
 
         let contract_hash = get_contract_hash(&builder);
+        let input = "8cf71022d8a4240c486d8653fbf31de4b7748ef3c1477b728d3eb1e7d307f1b2";
+        let bytes = Vec::from_hex(input).expect("Can not read from hex");
+        assert_eq!(bytes.len(), 32);
+        let group_key: [u8; 32] = bytes.try_into().expect("Can not convert in array");
 
-        let group_key: [u8; 32] = [7u8; 32];
         let fee_public_key: [u8; 32] = [8u8; 32];
         let whitelist = vec![ContractHash::from([9u8; 32])];
 
@@ -77,10 +80,15 @@ mod tests {
 
         let action_id = 123_u32;
 
-        let input = "e8d77107262fc5ae787662dc418cf01f36394a4d4ec417230dcac66c4afb0744e4d7d120735c3be7517750f53f22ac60b9dee22b05ab9775cf7e15406e9cc708";
+        let input = "e8d7718c262fc5ae787662dc418cf01f36394a4d4ec417230dcac66c4afb0744e4d7d120735c3be7517750f53f22ac60b9dee22b05ab9775cf7e15406e9cc708";
+
+        let input = "e8d77107262fc5ae787662dc418cf01f36394a4d4ec417230dcac66c4afb0744e4d7d120735c3be7517750f53f22ac60b9dee22b05ab9775cf7e15406e9cc708"; // fails with one byte of diff e8d771 8c/07
+
         let bytes = Vec::from_hex(input).expect("Can not read from hex");
         assert_eq!(bytes.len(), 64);
         let sig_data: [u8; 64] = bytes.try_into().expect("Can not convert in array");
+
+        dbg!(sig_data);
 
         let validate_pause_request = ExecuteRequestBuilder::contract_call_by_hash(
             *DEFAULT_ACCOUNT_ADDR,
@@ -92,6 +100,11 @@ mod tests {
             },
         )
         .build();
+
+        // builder
+        //     .exec(validate_pause_request)
+        //     .expect_success()
+        //     .commit();
 
         builder
             .exec(validate_pause_request)
